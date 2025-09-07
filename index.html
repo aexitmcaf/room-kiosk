@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>Boardroom Calendar</title>
+  <style>
+    html, body, iframe {
+      height: 100%;
+      width: 100%;
+      margin: 0;
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+  <iframe id="cal" src="" title="Boardroom Calendar"></iframe>
+  <script>
+    const BASE = "https://outlook.office365.com/calendar/published/b1c999909a294536a7be69dd7ac646db@alexhere.onmicrosoft.com/3041cb7c95a14884a82076b517153f091376340142476497750/calendar.html";
+    const cal = document.getElementById("cal");
+    function load() {
+      cal.src = BASE + (BASE.includes("?") ? "&" : "?") + "t=" + Date.now();
+    }
+    load();
+    // Refresh every 60 seconds (60000 ms)
+    setInterval(load, 60000);
+  </script>
+</body>
+</html>
