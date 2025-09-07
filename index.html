@@ -5,28 +5,64 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <meta name=”apple-mobile-web-app-capable” content=”yes “>
-  <title>Boardroom Calendar</title>
+  <title>Room Calendar (Smooth Refresh)</title>
   <style>
-    html, body, iframe {
-      height: 100%;
-      width: 100%;
-      margin: 0;
-      border: 0;
+    html, body { height:100%; margin:0; background:#000; }
+    .stage { position:relative; height:100%; width:100%; overflow:hidden; }
+    iframe {
+      position:absolute; inset:0; width:100%; height:100%; border:0;
+      opacity:0; transition:opacity 400ms ease;  /* fade duration */
+      background:#000;
     }
+    iframe.active { opacity:1; }
   </style>
 </head>
 <body>
-  <iframe id="cal" src="" title="Boardroom Calendar"></iframe>
+  <div class="stage">
+    <iframe id="a" class="active" title="Calendar A"></iframe>
+    <iframe id="b" title="Calendar B"></iframe>
+  </div>
+
   <script>
+    // === CONFIG ===
     const BASE = "https://outlook.office365.com/calendar/published/b1c999909a294536a7be69dd7ac646db@alexhere.onmicrosoft.com/3041cb7c95a14884a82076b517153f091376340142476497750/calendar.html";
-    const cal = document.getElementById("cal");
-    function load() {
-      cal.src = BASE + (BASE.includes("?") ? "&" : "?") + "t=" + Date.now();
+    const REFRESH_MS = 60000; // 2 minutes; try 60000 for 1 min, 180000 for 3 min
+    const FADE_MS = 400;       // keep in sync with CSS transition
+
+    // === LOGIC (double-buffer + cache-bust) ===
+    const ifrA = document.getElementById('a');
+    const ifrB = document.getElementById('b');
+    let showingA = true;
+
+    function srcWithBust() {
+      return BASE + (BASE.includes("?") ? "&" : "?") + "t=" + Date.now();
     }
-    load();
-    // Refresh every 60 seconds (60000 ms)
-    setInterval(load, 120000);
+
+    function initialLoad() {
+      ifrA.src = srcWithBust();
+    }
+
+    function refreshOnce() {
+      const next = showingA ? ifrB : ifrA;
+      // 1) start loading in the hidden iframe
+      next.onload = () => {
+        // 2) cross-fade: make 'next' visible, current fades out
+        next.classList.add('active');
+        const current = showingA ? ifrA : ifrB;
+        current.classList.remove('active');
+
+        // 3) after fade completes, swap roles
+        setTimeout(() => {
+          showingA = !showingA;
+          // Clean onload to avoid multiple triggers
+          next.onload = null;
+        }, FADE_MS);
+      };
+      next.src = srcWithBust();
+    }
+
+    initialLoad();
+    setInterval(refreshOnce, REFRESH_MS);
   </script>
 </body>
 </html>
